@@ -1,0 +1,23 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug xv6 with GDB",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/kernel/kernel", // xv6 内核的可执行文件路径
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": "127.0.0.1:25501",
+            "miDebuggerPath": "/opt/homebrew/bin/riscv64-elf-gdb", 
+            "logging": {
+                "engineLogging": true
+            }
+        }
+    ]
+}
