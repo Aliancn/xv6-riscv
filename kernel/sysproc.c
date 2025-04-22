@@ -49,6 +49,20 @@ sys_sbrk(void)
 }
 
 uint64
+sys_sbrk_buddy(void)
+{
+  uint64 addr;
+  int n; // space size to allocate
+  
+  argint(0, &n);
+  addr = myproc()->sz;
+  if (growproc_buddy(n) < 0)
+    return -1;
+    
+  return addr;
+}
+
+uint64
 sys_sleep(void)
 {
   int n;
@@ -90,4 +104,11 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_test_buddy(void)
+{
+  test_buddy_system();
+  return 0;
 }

@@ -21,3 +21,5 @@
 #define SYS_mkdir 20
 #define SYS_close 21
 #define SYS_getprocnum 22 // 获取进程数
+#define SYS_sbrk_buddy 23 // buddy系统分配内存
+#define SYS_test_buddy 24

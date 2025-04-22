@@ -198,6 +198,30 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
   }
 }
 
+void
+uvmunmap_buddy(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
+{
+  uint64 a;
+  pte_t *pte;
+
+  if((va % PGSIZE) != 0)
+    panic("uvmunmap: not aligned");
+
+  for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
+    if((pte = walk(pagetable, a, 0)) == 0)
+      panic("uvmunmap: walk");
+    if((*pte & PTE_V) == 0)
+      panic("uvmunmap: not mapped");
+    if(PTE_FLAGS(*pte) == PTE_V)
+      panic("uvmunmap: not a leaf");
+    if(do_free){
+      uint64 pa = PTE2PA(*pte);
+      kfree_buddy((void*)pa);
+    }
+    *pte = 0;
+  }
+}
+
 // create an empty user page table.
 // returns 0 if out of memory.
 pagetable_t
@@ -255,6 +279,46 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
   return newsz;
 }
 
+uint64 
+uvmalloc_buddy(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
+{
+  char *mem;
+  uint64 a;
+
+  // 如果新大小小于旧大小，不需要分配，直接返回旧大小
+  if (newsz < oldsz)
+    return oldsz;
+
+  // 将旧大小向上对齐到页大小
+  oldsz = PGROUNDUP(oldsz);
+  printf("uvmalloc_buddy: oldsz = %ld, newsz = %ld\n", oldsz, newsz);
+  // 遍历从 oldsz 到 newsz 的每一页
+  for (a = oldsz; a < newsz; a += PGSIZE) {
+    // 使用伙伴系统分配一页内存
+    mem = kalloc_buddy(PGSIZE);
+    if (mem == 0) {
+      // 如果分配失败，释放已分配的内存并返回错误
+      uvmdealloc_buddy(pagetable, a, oldsz);
+      return 0;
+    }
+
+    // 将分配的内存清零
+    memset(mem, 0, PGSIZE);
+
+    // printf("uvmalloc_buddy: a = %ld, mem = %p\n", a, mem);
+
+    // 将虚拟地址映射到分配的物理内存
+    if (mappages(pagetable, a, PGSIZE, (uint64)mem, PTE_R | PTE_U | xperm) != 0) {
+      // 如果映射失败，释放内存并回滚
+      kfree_buddy(mem);
+      uvmdealloc_buddy(pagetable, a, oldsz);
+      return 0;
+    }
+  }
+
+  // 返回新的地址空间大小
+  return newsz;
+}
 // Deallocate user pages to bring the process size from oldsz to
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
 // need to be less than oldsz.  oldsz can be larger than the actual
@@ -268,6 +332,20 @@ uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){
     int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
     uvmunmap(pagetable, PGROUNDUP(newsz), npages, 1);
+  }
+
+  return newsz;
+}
+
+uint64 
+uvmdealloc_buddy(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
+{
+  if(newsz >= oldsz)
+    return oldsz;
+
+  if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){
+    int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
+    uvmunmap_buddy(pagetable, PGROUNDUP(newsz), npages, 1);
   }
 
   return newsz;

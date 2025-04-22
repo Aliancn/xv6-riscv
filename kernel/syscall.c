@@ -88,6 +88,7 @@ extern uint64 sys_chdir(void);
 extern uint64 sys_dup(void);
 extern uint64 sys_getpid(void);
 extern uint64 sys_sbrk(void);
+extern uint64 sys_sbrk_buddy(void); // buddy系统分配内存
 extern uint64 sys_sleep(void);
 extern uint64 sys_uptime(void);
 extern uint64 sys_open(void);
@@ -98,6 +99,7 @@ extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_getprocnum(void); // 获取进程数
+extern uint64 sys_test_buddy(void); // 测试buddy系统
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -124,6 +126,8 @@ static uint64 (*syscalls[])(void) = {
     [SYS_mkdir] sys_mkdir,
     [SYS_close] sys_close,
     [SYS_getprocnum] sys_getprocnum, // 获取进程数
+    [SYS_sbrk_buddy] sys_sbrk_buddy, // buddy系统分配内存
+    [SYS_test_buddy] sys_test_buddy  // 测试buddy系统
 };
 
 void syscall(void)

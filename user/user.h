@@ -23,7 +23,8 @@ char *sbrk(int);
 int sleep(int);
 int uptime(void);
 int getprocnum(void); // 获取进程数
-
+char *sbrk_buddy(int);
+int test_buddy(void); // 测试buddy系统
 // ulib.c
 int stat(const char *, struct stat *);
 char *strcpy(char *, const char *);

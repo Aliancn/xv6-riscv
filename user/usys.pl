@@ -36,4 +36,6 @@ entry("getpid");
 entry("sbrk");
 entry("sleep");
 entry("uptime");
-entry("getprocnum")
+entry("getprocnum");
+entry("sbrk_buddy");
+entry("test_buddy");

@@ -63,7 +63,9 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
-
+void*           kalloc_buddy(uint64);
+void            kfree_buddy(void *);
+void            test_buddy_system(void);
 // log.c
 void            initlog(int, struct superblock*);
 void            log_write(struct buf*);
@@ -86,6 +88,7 @@ int             cpuid(void);
 void            exit(int);
 int             fork(void);
 int             growproc(int);
+int             growproc_buddy(int);
 void            proc_mapstacks(pagetable_t);
 pagetable_t     proc_pagetable(struct proc *);
 void            proc_freepagetable(pagetable_t, uint64);
@@ -163,7 +166,9 @@ int             mappages(pagetable_t, uint64, uint64, uint64, int);
 pagetable_t     uvmcreate(void);
 void            uvmfirst(pagetable_t, uchar *, uint);
 uint64          uvmalloc(pagetable_t, uint64, uint64, int);
+uint64          uvmalloc_buddy(pagetable_t, uint64, uint64, int);
 uint64          uvmdealloc(pagetable_t, uint64, uint64);
+uint64          uvmdealloc_buddy(pagetable_t, uint64, uint64);
 int             uvmcopy(pagetable_t, pagetable_t, uint64);
 void            uvmfree(pagetable_t, uint64);
 void            uvmunmap(pagetable_t, uint64, uint64, int);

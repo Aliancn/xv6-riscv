@@ -281,6 +281,29 @@ int growproc(int n)
   return 0;
 }
 
+int growproc_buddy(int n)
+{
+  uint64 sz;
+  struct proc *p = myproc();
+
+  sz = p->sz;
+  printf("Befer growproc_buddy: sz = %ld\n", sz);
+  if (n > 0)
+  {
+    if ((sz = uvmalloc_buddy(p->pagetable, sz, sz + n, PTE_W)) == 0)
+    {
+      return -1;
+    }
+  }
+  else if (n < 0)
+  {
+    sz = uvmdealloc_buddy(p->pagetable, sz, sz + n);
+  }
+  p->sz = sz;
+  printf("After growproc_buddy: sz = %ld\n", sz);
+  return 0;
+}
+
 // Create a new process, copying the parent.
 // Sets up child kernel stack to return as if from fork() system call.
 int fork(void)
