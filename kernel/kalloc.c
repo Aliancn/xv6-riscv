@@ -94,6 +94,9 @@ struct allocation_info
     uint64 size; // 分配块的大小
 };
 struct allocation_info allocation_table[MAX_ALLOCATIONS];
+struct spinlock allocation_lock; // 保护分配表的锁
+
+
 void init_allocation_table()
 {
     for (int i = 0; i < MAX_ALLOCATIONS; i++)
@@ -104,39 +107,48 @@ void init_allocation_table()
 }
 void save_allocation_info(void *addr, uint64 size)
 {
+    acquire(&allocation_lock); // 获取锁，防止并发修改
     for (int i = 0; i < MAX_ALLOCATIONS; i++)
     {
         if (allocation_table[i].addr == NULL)
         {
             allocation_table[i].addr = addr;
             allocation_table[i].size = size;
+            release(&allocation_lock); // 释放锁
             return;
         }
     }
+    release(&allocation_lock); // 释放锁
     panic("save_allocation_info: allocation table full");
 }
 void remove_allocation_info(void *addr)
 {
+    acquire(&allocation_lock); // 获取锁，防止并发修改
     for (int i = 0; i < MAX_ALLOCATIONS; i++)
     {
         if (allocation_table[i].addr == addr)
         {
             allocation_table[i].addr = NULL;
             allocation_table[i].size = 0;
+            release(&allocation_lock); // 释放锁
             return;
         }
     }
+    release(&allocation_lock); // 释放锁
     panic("remove_allocation_info: address not found");
 }
 uint64 get_allocation_size(void *addr)
 {
+    acquire(&allocation_lock); // 获取锁，防止并发修改
     for (int i = 0; i < MAX_ALLOCATIONS; i++)
     {
         if (allocation_table[i].addr == addr)
         {
+            release(&allocation_lock); 
             return allocation_table[i].size;
         }
     }
+    release(&allocation_lock); // 释放锁
     return 0; // 未找到
 }
 // 空闲块链表
@@ -178,7 +190,6 @@ void buddy_system_init(void *start)
     block->next = bsystem.free_list[order];
     bsystem.free_list[order] = block;
 
-    print_buddy_system_state();
 }
 
 // 计算请求大小对应的最小阶数
@@ -254,10 +265,8 @@ void *buddy_alloc(uint64 size)
         buddy->next = bsystem.free_list[current_order];
         bsystem.free_list[current_order] = buddy;
     }
-
     // 释放锁
     release(&bsystem.lock);
-
     // 返回分配的内存块
     return block;
 }
@@ -299,7 +308,6 @@ static void remove_from_free_list(void *addr, int order)
 // 释放内存
 void buddy_free(void *ptr, uint64 size)
 {
-
     if (ptr == NULL || size == 0)
     {
         return;
@@ -359,8 +367,6 @@ void buddy_free(void *ptr, uint64 size)
 void *
 kalloc_buddy(uint64 size)
 {
-    // printf("kalloc_buddy: size = %ld\n", size);
-
     // 检查请求的大小是否有效
     if (size == 0 || size > TOTAL_MEMORY)
     {
@@ -374,7 +380,6 @@ kalloc_buddy(uint64 size)
         return NULL; // 分配失败
     }
 
-    // printf("kalloc_buddy: block = %p, size = %ld\n", block, size);
     save_allocation_info(block, size);
     print_buddy_system_state();
 
@@ -390,11 +395,6 @@ void kfree_buddy(void *ptr)
         return; // 无效的释放请求
     }
     uint64 bsize = get_allocation_size(ptr); // 检查分配信息
-    // if (bsize != size) {
-    //     printf("kfree_buddy: size mismatch, expected %ld, got %ld\n", bsize, size);
-    //     return; // 大小不匹配
-    // }
-    // printf("kfree_buddy: ptr = %p, size = %ld, bsize = %ld\n", ptr, size, bsize);
     // 调用伙伴系统的释放函数
     buddy_free(ptr, bsize);
     remove_allocation_info(ptr); // 删除分配信息

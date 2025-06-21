@@ -17,7 +17,8 @@
             "miDebuggerPath": "/opt/homebrew/bin/riscv64-elf-gdb", 
             "logging": {
                 "engineLogging": true
-            }
+            },
+            "preLaunchTask": "xv6build",
         }
     ]
 }

@@ -77,7 +77,6 @@ void test_data_integrity() {
 
 void test_boundary_cases() {
     printf("\n=== Testing Boundary Cases ===\n");
-    
     // Test allocation of 0 bytes
     printf("Testing sbrk_buddy(0)...\n");
     char* brk1 = sbrk_buddy(0);
@@ -87,7 +86,6 @@ void test_boundary_cases() {
                (uint64)brk1, (uint64)brk2);
         exit(1);
     }
-
     // Test negative allocation (deallocation)
     printf("Allocating 512 bytes to test deallocation...\n");
     char* alloc = sbrk_buddy(512);
@@ -95,9 +93,7 @@ void test_boundary_cases() {
         printf("Failed to allocate 512 bytes\n");
         exit(1);
     }
-    
     printf("Current break: 0x%lx\n", (uint64)sbrk_buddy(0));
-    
     printf("Freeing 256 bytes...\n");
     if ((uint64)sbrk_buddy(-256) == (uint64)-1) {
         printf("Failed to free 256 bytes\n");

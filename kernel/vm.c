@@ -305,8 +305,6 @@ uvmalloc_buddy(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
     // 将分配的内存清零
     memset(mem, 0, PGSIZE);
 
-    // printf("uvmalloc_buddy: a = %ld, mem = %p\n", a, mem);
-
     // 将虚拟地址映射到分配的物理内存
     if (mappages(pagetable, a, PGSIZE, (uint64)mem, PTE_R | PTE_U | xperm) != 0) {
       // 如果映射失败，释放内存并回滚
